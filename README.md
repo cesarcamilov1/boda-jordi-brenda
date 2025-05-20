@@ -2,6 +2,19 @@
 
 # Proyecto de Boda - Guía de Uso
 
+## Cambios recientes en la app para implementar la DB
+1. debes de crear un archivo .env en la carpeta raiz
+2. Copia en el archivo .env los siguientes datos
+```bash
+# Configuración del servidor
+PORT=2002
+NODE_ENV=development
+
+# Configuración de MongoDB
+MONGODB_URI=URLMONGO
+```
+3. Corre el proyecto. Para ello necesitas usar los puntos 2, 3, y 4. 
+
 ### Tecnologias usadas
 * NodeJS
 * MongoDB
