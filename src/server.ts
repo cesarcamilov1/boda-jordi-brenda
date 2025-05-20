@@ -4,6 +4,7 @@ import compression from "compression";
 import { createServer } from "http";
 import { serverConfig } from "./config/serverConfig";
 import { connectDB } from "./config/dbConfig";
+import { verifyMailConnection } from "./config/mailConfig";
 
 const app = express();
 
@@ -42,6 +43,7 @@ const middlewares = (app: Express) => {
 const start = async () => {
   try {
     await connectDB();
+    await verifyMailConnection();
     middlewares(app);
     routes(app);
     server(app);
