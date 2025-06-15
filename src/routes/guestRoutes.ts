@@ -5,7 +5,8 @@ import {
   getAllGuests,
   getConfirmedGuests,
   updateGuest,
-  deleteGuest
+  deleteGuest,
+  getGuestByCode
 } from "../controllers/guestController";
 
 const router = Router();
@@ -21,6 +22,9 @@ router.get("/confirmados", getConfirmedGuests);
 router.put("/:id", updateGuest);
 
 router.delete("/:id", deleteGuest);
+
+router.get("/codigo/:code", getGuestByCode);
+
 
 
 export default router;
