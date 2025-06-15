@@ -179,3 +179,26 @@ export const deleteGuest = async (req: Request, res: Response) => {
         }
     }
 };
+/**
+ * @route   GET /api/invitados/codigo/:code
+ * @desc    Buscar un invitado por su código de reserva
+ */
+export const getGuestByCode = async (req: Request, res: Response) => {
+    try {
+        const { code } = req.params;
+        const guest = await Guest.findOne({ codigo_reserva: code });
+
+        if (!guest) {
+            return res.status(404).json({ message: "No se encontró ningún invitado con ese código de reserva." });
+        }
+
+        res.status(200).json(guest);
+
+    } catch (error) {
+        if (error instanceof Error) {
+            res.status(500).json({ message: "Error al buscar el invitado.", error: error.message });
+        } else {
+            res.status(500).json({ message: "Ocurrió un error desconocido." });
+        }
+    }
+};
