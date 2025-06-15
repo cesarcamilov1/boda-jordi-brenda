@@ -1,12 +1,8 @@
 import { Request, Response } from "express";
 import Guest from "../models/Guest";
 import { customAlphabet } from "nanoid";
-
-// Importaciones para el envío de correo y QR
 import { transporter, emailConfig } from "../config/mailConfig";
 import QRCode from "qrcode";
-
-// --- Funciones sin cambios ---
 
 const generateReservationCode = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 6);
 
@@ -36,8 +32,6 @@ export const createGuest = async (req: Request, res: Response) => {
     }
 };
 
-// --- FUNCIÓN 'confirmAttendance' MODIFICADA ---
-
 /**
  * @route   POST /api/invitados/confirmar
  * @desc    Confirmar la asistencia y enviar email con código QR
@@ -64,26 +58,19 @@ export const confirmAttendance = async (req: Request, res: Response) => {
             });
         }
 
-        // Actualizar base de datos
         guest.confirmado = true;
         guest.email_confirmacion = email;
         guest.acompanantes_confirmados = numAcompanantes;
         await guest.save();
 
-        // --- INICIO: LÓGICA DE ENVÍO DE CORREO ---
-
-        // 1. Preparar datos para el QR
         const qrData = JSON.stringify({
             codigo_reserva: guest.codigo_reserva,
             nombre: guest.nombre_invitado,
-            // Sumamos 1 al número de acompañantes para incluir al invitado principal
             total_personas: numAcompanantes + 1,
         });
 
-        // 2. Generar el código QR como una imagen Data URL (base64)
         const qrCodeImage = await QRCode.toDataURL(qrData);
 
-        // 3. Estructura del correo en HTML
         const emailHtml = `
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <h2>Confirmación de Asistencia</h2>
@@ -98,23 +85,19 @@ export const confirmAttendance = async (req: Request, res: Response) => {
             </div>
         `;
 
-        // 4. Configurar y enviar el correo
         await transporter.sendMail({
-            from: emailConfig.from, // "Nuestra Boda <tu_email@gmail.com>"
+            from: emailConfig.from,
             to: email,
             subject: "Confirmación de Asistencia",
             html: emailHtml,
-            // Se adjunta la imagen para que algunos clientes de correo la muestren correctamente
             attachments: [{
                 filename: 'qrcode.png',
                 path: qrCodeImage,
-                cid: 'qrcode' // content id
+                cid: 'qrcode'
             }]
         });
 
         console.log(`Correo de confirmación enviado a ${email}`);
-
-        // --- FIN: LÓGICA DE ENVÍO DE CORREO ---
 
         res.status(200).json({
             message: `¡Gracias por confirmar, ${guest.nombre_invitado}! Se ha enviado un correo con tu código QR a ${email}.`,
@@ -122,7 +105,6 @@ export const confirmAttendance = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        // Manejo de errores mejorado para diferenciar entre error de DB y de email
         console.error("Error en el proceso de confirmación:", error);
         if (error instanceof Error) {
             res.status(500).json({ message: "Error al confirmar la asistencia.", error: error.message });
@@ -132,8 +114,6 @@ export const confirmAttendance = async (req: Request, res: Response) => {
     }
 };
 
-
-// --- Funciones GET, PUT, DELETE (sin cambios) ---
 
 export const getAllGuests = async (req: Request, res: Response) => {
     try {
