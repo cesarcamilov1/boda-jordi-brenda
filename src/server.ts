@@ -6,12 +6,16 @@ import { serverConfig } from "./config/serverConfig";
 import { connectDB } from "./config/dbConfig";
 import { verifyMailConnection } from "./config/mailConfig";
 
+import guestRoutes from "./routes/guestRoutes";
+
 const app = express();
 
 const routes = (app: Express) => {
   app.get("/", (request, response) => {
-    response.send("Que vivan los novios xdxd .API");
+    response.send("API working");
   });
+
+  app.use("/api/invitados", guestRoutes);
 };
 
 const server = (app: Express) => {
@@ -23,13 +27,9 @@ const server = (app: Express) => {
 };
 
 const middlewares = (app: Express) => {
-  
   app.use(cors());
-
   app.use(compression());
-
   app.use(express.json());
-
   app.use(express.urlencoded({ extended: true }));
 
   if (!serverConfig.isProduction) {

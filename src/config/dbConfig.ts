@@ -17,7 +17,7 @@ export const dbConfig = {
 export const connectDB = async (): Promise<void> => {
   try {
     await mongoose.connect(dbConfig.url, dbConfig.options);
-    console.log("✅ Conexión establecida con la DB");
+    console.log("Conexión establecida con la DB");
   } catch (error) {
     console.error("Error al conectar:", error);
     process.exit(1);
@@ -35,6 +35,6 @@ mongoose.connection.on("disconnected", () => {
 
 process.on("SIGINT", async () => {
   await mongoose.connection.close();
-  console.log("🔌 Conexión a MongoDB cerrada por finalización de la aplicación");
+  console.log("Conexión a MongoDB cerrada por finalización de la aplicación");
   process.exit(0);
 });
