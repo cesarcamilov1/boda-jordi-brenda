@@ -50,7 +50,7 @@ export const confirmAttendance = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "Código de reserva no encontrado." });
         }
         if (guest.confirmado) {
-            return res.status(400).json({ message: "Esta asistencia ya ha sido confirmada previamente." });
+            return res.status(400).json({ message: `Tu asistencia ya ha sido confirmada. Los detalles de tu invitación fueron enviados a tu correo registrado` });
         }
         if (numAcompanantes < 0 || numAcompanantes > guest.max_acompanantes) {
             return res.status(400).json({
