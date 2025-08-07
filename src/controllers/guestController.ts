@@ -85,13 +85,16 @@ export const confirmAttendance = async (req: Request, res: Response) => {
       },
     });
 
-    const emailHtml = `
-    <div style="background-color: #f9f9f9; font-family: 'Montserrat', sans-serif; padding: 20px; text-align: center;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
-          <h2 style="font-family: 'Montserrat', sans-serif; padding-top: 50px; color: #6d4c41; text-align: center; font-size: 28px; font-weight: normal; margin: 0;">
+  const emailHtml = `
+    <div style="background-color: #f9f9f9; font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+      <div style="max-width: 600px; margin: auto; background-color: #F3F1EB; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        
+        <div style="background-color: #f3f1eb; padding: 30px 40px;">
+          <h2 style="font-family: 'Times New Roman', Times, serif; color: #6d4c41; text-align: center; font-size: 28px; font-weight: normal; margin: 0;">
             Confirmación de Asistencia
           </h2>
-       
+        </div>
+
         <div style="padding: 40px; text-align: left; color: #333; font-size: 16px; line-height: 1.6;">
           
           <p>
@@ -99,23 +102,38 @@ export const confirmAttendance = async (req: Request, res: Response) => {
           </p>
           
           <p>
-            Gracias por confirmar tu asistencia a nuestra boda.
+            Gracias por confirmar tu asistencia a nuestra boda!
           </p>
 
           <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 30px 0;">
 
+          <h3 style="font-family: 'Times New Roman', Times, serif; color: #6d4c41; font-size: 20px; font-weight: normal; margin-top: 0;">
+            Resumen de tu confirmación
+          </h3>
           <p style="margin-top: 10px; color: #333;">
-            <strong>Número total de personas confirmadas:</strong> ${numAcompanantes}
+            <strong>Invitados confirmados:</strong> ${numAcompanantes + 1}
           </p>
           <p style="margin-top: 20px; color: #333;">
-            Este es tu código QR de confirmación. Por favor muestralo el día del evento:
+            Este es tu código QR de confirmación, por favor muestra el siguiente código QR el día del evento:
+            Te recomendamos <strong>guardar este correo</strong>.
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
             <img src="cid:qrcode" alt="Código QR de confirmación" style="max-width: 180px; height: auto; border: 1px solid #6d4c41; padding: 5px;" />
           </div>
 
-          <div style="text-align: right; font-family: 'Montserrat', sans-serif; font-size: 18px; color: #6d4c41; margin-top: 40px;">
+          <div style="background-color: #f3f1eb; padding: 20px; border-radius: 5px; text-align: center; margin-top: 30px; color: #6d4c41;">
+              <p style="margin: 0; font-size: 14px; color: #6d4c41;">Detalles del evento:</p>
+              <p style="margin: 10px 0 0 0; font-size: 16px; font-weight: bold; color: #333;">
+                  Sábado, 13 de Diciembre de 2025<br>
+                  4:00 PM
+              </p>
+              <p style="margin: 10px 0 0 0; font-size: 15px; color: #333;">
+                Jardín Magnolia Morelos
+              </p>
+          </div>
+
+          <div style="text-align: right; font-family: 'Times New Roman', Times, serif; font-size: 18px; color: #6d4c41; margin-top: 40px;">
             <p style="margin: 0;">Con cariño,</p>
             <p style="margin: 5px 0 0 0; font-weight: bold;">Brenda y Jordi</p>
           </div>
@@ -154,17 +172,14 @@ export const confirmAttendance = async (req: Request, res: Response) => {
           <li><strong>Código de Reserva:</strong> ${guest.codigo_reserva}</li>
           <li><strong>Acompañantes Confirmados:</strong> ${numAcompanantes}</li>
           <li><strong>Total de Personas:</strong> ${numAcompanantes + 1}</li>
-          <li><strong>Fecha de Confirmación:</strong> ${new Date().toLocaleString(
-            "es-MX",
-            { timeZone: "America/Mexico_City" }
-          )}</li>
+          <li><strong>Fecha de Confirmación:</strong> ${new Date().toLocaleString("es-MX", { timeZone: "America/Mexico_City" })}</li>
         </ul>
       </div>
     `;
 
     await transporter.sendMail({
       from: emailConfig.from,
-      to: "contacto@cesarcamilo.com",
+      to: "jordi.moher@gmail.com",
       subject: `Nuevo Invitado Confirmado: ${guest.nombre_invitado}`,
       html: adminNotificationHtml,
     });
