@@ -85,52 +85,34 @@ export const confirmAttendance = async (req: Request, res: Response) => {
       },
     });
 
-  const emailHtml = `
+    const emailHtml = `
     <div style="background-color: #f9f9f9; font-family: Arial, sans-serif; padding: 20px; text-align: center;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="max-width: 600px; margin: auto; background-color: #F3F1EB; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
         
-        <div style="background-color: #f3f1eb; padding: 30px 40px;">
-          <h2 style="font-family: 'Times New Roman', Times, serif; color: #6d4c41; text-align: center; font-size: 28px; font-weight: normal; margin: 0;">
+      
+        <div style="padding: 40px; text-align: left; color: #333; font-size: 16px; line-height: 1.6;">
+
+            <h2 style="font-family: 'Times New Roman', Times, serif; color: #6d4c41; text-align: center; font-size: 28px; font-weight: normal; margin: 0;">
             Confirmación de Asistencia
           </h2>
-        </div>
-
-        <div style="padding: 40px; text-align: left; color: #333; font-size: 16px; line-height: 1.6;">
           
           <p>
             Hola <strong>${guest.nombre_invitado}</strong>,
           </p>
           
           <p>
-            Gracias por confirmar tu asistencia a nuestra boda!
+            Gracias por confirmar tu asistencia a nuestra boda.
           </p>
 
-          <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 30px 0;">
-
-          <h3 style="font-family: 'Times New Roman', Times, serif; color: #6d4c41; font-size: 20px; font-weight: normal; margin-top: 0;">
-            Resumen de tu confirmación
-          </h3>
           <p style="margin-top: 10px; color: #333;">
-            <strong>Invitados confirmados:</strong> ${numAcompanantes + 1}
+            <strong>Numero total de personas confirmadas:</strong> ${numAcompanantes + 1}
           </p>
           <p style="margin-top: 20px; color: #333;">
-            Este es tu código QR de confirmación, por favor muestra el siguiente código QR el día del evento:
-            Te recomendamos <strong>guardar este correo</strong>.
+            Este es tu código QR de confirmación. Por favor, múestralo el día del evento:
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
             <img src="cid:qrcode" alt="Código QR de confirmación" style="max-width: 180px; height: auto; border: 1px solid #6d4c41; padding: 5px;" />
-          </div>
-
-          <div style="background-color: #f3f1eb; padding: 20px; border-radius: 5px; text-align: center; margin-top: 30px; color: #6d4c41;">
-              <p style="margin: 0; font-size: 14px; color: #6d4c41;">Detalles del evento:</p>
-              <p style="margin: 10px 0 0 0; font-size: 16px; font-weight: bold; color: #333;">
-                  Sábado, 13 de Diciembre de 2025<br>
-                  4:00 PM
-              </p>
-              <p style="margin: 10px 0 0 0; font-size: 15px; color: #333;">
-                Jardín Magnolia Morelos
-              </p>
           </div>
 
           <div style="text-align: right; font-family: 'Times New Roman', Times, serif; font-size: 18px; color: #6d4c41; margin-top: 40px;">
