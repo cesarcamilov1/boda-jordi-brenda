@@ -140,7 +140,28 @@ export const confirmAttendance = async (req: Request, res: Response) => {
       ],
     });
 
+    // Enviar notificación al administrador
+    const adminEmail = "Jordi.moher@gmail.com";
+    const notificationHtml = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>Nueva confirmación de asistencia para la boda</h2>
+        <p><strong>Invitado:</strong> ${guest.nombre_invitado}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Código de reserva:</strong> ${codigo_reserva}</p>
+        <p><strong>Acompañantes confirmados:</strong> ${numAcompanantes}</p>
+        <p><strong>Fecha de confirmación:</strong> ${new Date().toLocaleString('es-ES')}</p>
+      </div>
+    `;
+    
+    await transporter.sendMail({
+      from: emailConfig.from,
+      to: adminEmail,
+      subject: `💒 Nueva confirmación: ${guest.nombre_invitado}`,
+      html: notificationHtml
+    });
+
     console.log(`Correo de confirmación enviado a ${email}`);
+    console.log(`Notificación enviada a ${adminEmail}`);
 
     res.status(200).json({
       message: `¡Gracias por confirmar, ${guest.nombre_invitado}! Se ha enviado un correo con tu código QR a ${email}.`,
