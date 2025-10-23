@@ -6,7 +6,8 @@ import {
   getConfirmedGuests,
   updateGuest,
   deleteGuest,
-  getGuestByCode
+  getGuestByCode,
+  resendInvitation
 } from "../controllers/guestController";
 
 const router = Router();
@@ -14,6 +15,8 @@ const router = Router();
 router.post("/", createGuest);
 
 router.post("/confirmar", confirmAttendance);
+
+router.post("/reenviar-invitacion", resendInvitation);
 
 router.get("/", getAllGuests);
 

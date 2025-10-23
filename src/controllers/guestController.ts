@@ -328,3 +328,148 @@ export const getGuestByCode = async (req: Request, res: Response) => {
     }
   }
 };
+
+/**
+ * @route   POST /api/invitados/reenviar-invitacion
+ * @desc    Reenviar el correo de invitación con el código QR
+ */
+export const resendInvitation = async (req: Request, res: Response) => {
+  try {
+    const { codigo_reserva } = req.body;
+
+    if (!codigo_reserva) {
+      return res.status(400).json({
+        message: "El código de reserva es requerido.",
+      });
+    }
+
+    const guest = await Guest.findOne({ codigo_reserva });
+
+    if (!guest) {
+      return res.status(404).json({
+        message: "Código de reserva no encontrado.",
+      });
+    }
+
+    if (!guest.confirmado) {
+      return res.status(400).json({
+        message: "Este invitado aún no ha confirmado su asistencia. No hay invitación para reenviar.",
+      });
+    }
+
+    if (!guest.email_confirmacion) {
+      return res.status(400).json({
+        message: "No se encontró un email registrado para este invitado.",
+      });
+    }
+
+    const baseUrl = process.env.FRONTEND_URL || "https://lavidabonita.vercel.app";
+    const qrUrl = `${baseUrl}/invitacion/${guest.codigo_reserva}`;
+    const qrCodeImage = await QRCode.toDataURL(qrUrl, {
+      width: 250,
+      margin: 1,
+      color: {
+        light: "#FFFFFF",
+      },
+    });
+
+    const emailHtml = `
+    <div style="background-color: #f9f9f9; font-family: Arial, sans-serif; padding: 20px; text-align: center;">
+      <div style="max-width: 600px; margin: auto; background-color: #F3F1EB; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        
+      
+        <div style="padding: 40px; text-align: left; color: #333; font-size: 16px; line-height: 1.6;">
+
+            <h2 style="font-family: 'Times New Roman', Times, serif; color: #6d4c41; text-align: center; font-size: 28px; font-weight: normal; margin: 0;">
+            Confirmación de Asistencia
+          </h2>
+          
+          <p>
+            Hola <strong>${guest.nombre_invitado}</strong>,
+          </p>
+          
+          <p>
+            Gracias por confirmar tu asistencia a nuestra boda.
+          </p>
+
+          <p style="margin-top: 10px; color: #333;">
+            <strong>Numero total de personas confirmadas:</strong> ${(guest.acompanantes_confirmados || 0) + 1}
+          </p>
+          <p style="margin-top: 20px; color: #333;">
+            Este es tu código QR de confirmación. Por favor, múestralo el día del evento:
+          </p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <img src="cid:qrcode" alt="Código QR de confirmación" style="max-width: 180px; height: auto; border: 1px solid #6d4c41; padding: 5px;" />
+          </div>
+
+          <div style="text-align: right; font-family: 'Times New Roman', Times, serif; font-size: 18px; color: #6d4c41; margin-top: 40px;">
+            <p style="margin: 0;">Con cariño,</p>
+            <p style="margin: 5px 0 0 0; font-weight: bold;">Brenda y Jordi</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+
+    // Convertir el QR code de Data URL a Buffer
+    const base64Data = qrCodeImage.replace(/^data:image\/png;base64,/, "");
+
+    // Crear email en formato MIME con attachments
+    const boundary = "----=_Part_0_" + Date.now() + "." + Math.random();
+    const rawMessage = [
+      `From: ${emailConfig.from}`,
+      `To: ${guest.email_confirmacion}`,
+      `Subject: =?UTF-8?B?${Buffer.from("Confirmación de Asistencia").toString("base64")}?=`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/related; boundary="${boundary}"`,
+      ``,
+      `--${boundary}`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      emailHtml,
+      ``,
+      `--${boundary}`,
+      `Content-Type: image/png; name="qrcode.png"`,
+      `Content-Transfer-Encoding: base64`,
+      `Content-ID: <qrcode>`,
+      `Content-Disposition: inline; filename="qrcode.png"`,
+      ``,
+      base64Data,
+      ``,
+      `--${boundary}--`,
+    ].join("\r\n");
+
+    // Enviar email con AWS SES usando SendRawEmailCommand
+    const sendEmailCommand = new SendRawEmailCommand({
+      RawMessage: {
+        Data: Buffer.from(rawMessage),
+      },
+    });
+
+    await sesClient.send(sendEmailCommand);
+
+    console.log(`Invitación reenviada a ${guest.email_confirmacion}`);
+
+    res.status(200).json({
+      message: `La invitación ha sido reenviada exitosamente a ${guest.email_confirmacion}.`,
+      guest: {
+        nombre_invitado: guest.nombre_invitado,
+        email_confirmacion: guest.email_confirmacion,
+        codigo_reserva: guest.codigo_reserva,
+      },
+    });
+  } catch (error) {
+    console.error("Error al reenviar la invitación:", error);
+    if (error instanceof Error) {
+      res.status(500).json({
+        message: "Error al reenviar la invitación.",
+        error: error.message,
+      });
+    } else {
+      res.status(500).json({ message: "Ocurrió un error desconocido." });
+    }
+  }
+};
