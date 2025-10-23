@@ -1,46 +1,34 @@
-import nodemailer from "nodemailer";
+import { SESClient } from "@aws-sdk/client-ses";
 import dotenv from "dotenv";
 dotenv.config();
 
 const {
-  EMAIL_HOST,
-  EMAIL_PORT,
-  EMAIL_USER,
-  EMAIL_PASSWORD,
+  AWS_REGION,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
   EMAIL_FROM,
-  EMAIL_SECURE,
-  NODE_ENV
 } = process.env;
 
-const mailConfig = {
-  host: EMAIL_HOST || "smtp.gmail.com",
-  port: Number(EMAIL_PORT) || 465,
-  secure: EMAIL_SECURE === "true",
-  auth: {
-    user: EMAIL_USER || "",
-    pass: EMAIL_PASSWORD || ""
+// Configurar el cliente de AWS SES
+export const sesClient = new SESClient({
+  region: AWS_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: AWS_SECRET_ACCESS_KEY || "",
   },
-  tls: {
-    rejectUnauthorized: NODE_ENV === "production" 
-  },
-  pool: true,
-  maxConnections: 5,
-  maxMessages: 100,
-};
-
-const transporter = nodemailer.createTransport(mailConfig);
+});
 
 export const verifyMailConnection = async (): Promise<void> => {
   try {
-    await transporter.verify();
-    console.log("Nodemailer al toque para enviar correos");
+    // AWS SES no requiere verificación de conexión como Nodemailer
+    // La verificación se hace al enviar el primer correo
+    console.log("AWS SES configurado y listo para enviar correos");
   } catch (error) {
-    console.error("Error al conectar con el servidor:", error);
-    console.warn("La funciones no estan disponibles");
+    console.error("Error al configurar AWS SES:", error);
+    console.warn("Las funciones de email no están disponibles");
   }
 };
 
-export { transporter };
 export const emailConfig = {
-  from: EMAIL_FROM || `Nuestra Boda <${EMAIL_USER}>`,
+  from: EMAIL_FROM || "noreply@example.com",
 };

@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import Guest from "../models/Guest";
 import { customAlphabet } from "nanoid";
-import { transporter, emailConfig } from "../config/mailConfig";
+import { sesClient, emailConfig } from "../config/mailConfig";
+import { SendRawEmailCommand } from "@aws-sdk/client-ses";
 import QRCode from "qrcode";
 
 const generateReservationCode = customAlphabet(
@@ -75,7 +76,7 @@ export const confirmAttendance = async (req: Request, res: Response) => {
     guest.acompanantes_confirmados = numAcompanantes;
     await guest.save();
 
-    const baseUrl = process.env.FRONTEND_URL || "localhost:3000";
+    const baseUrl = process.env.FRONTEND_URL || "https://lavidabonita.vercel.app";
     const qrUrl = `${baseUrl}/invitacion/${guest.codigo_reserva}`;
     const qrCodeImage = await QRCode.toDataURL(qrUrl, {
       width: 250,
@@ -125,20 +126,44 @@ export const confirmAttendance = async (req: Request, res: Response) => {
     </div>
   `;
 
-    await transporter.sendMail({
-      from: emailConfig.from,
-      to: email,
-      subject: "Confirmación de Asistencia",
-      html: emailHtml,
-      // 👇 Esta sección enlaza el 'cid:qrcode' con la imagen
-      attachments: [
-        {
-          filename: "qrcode.png",
-          path: qrCodeImage,
-          cid: "qrcode", // <- El ID al que se hace referencia
-        },
-      ],
+    // Convertir el QR code de Data URL a Buffer
+    const base64Data = qrCodeImage.replace(/^data:image\/png;base64,/, "");
+    const qrBuffer = Buffer.from(base64Data, "base64");
+
+    // Crear email en formato MIME con attachments
+    const boundary = "----=_Part_0_" + Date.now() + "." + Math.random();
+    const rawMessage = [
+      `From: ${emailConfig.from}`,
+      `To: ${email}`,
+      `Subject: =?UTF-8?B?${Buffer.from("Confirmación de Asistencia").toString("base64")}?=`,
+      `MIME-Version: 1.0`,
+      `Content-Type: multipart/related; boundary="${boundary}"`,
+      ``,
+      `--${boundary}`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      emailHtml,
+      ``,
+      `--${boundary}`,
+      `Content-Type: image/png; name="qrcode.png"`,
+      `Content-Transfer-Encoding: base64`,
+      `Content-ID: <qrcode>`,
+      `Content-Disposition: inline; filename="qrcode.png"`,
+      ``,
+      base64Data,
+      ``,
+      `--${boundary}--`,
+    ].join("\r\n");
+
+    // Enviar email con AWS SES usando SendRawEmailCommand
+    const sendEmailCommand = new SendRawEmailCommand({
+      RawMessage: {
+        Data: Buffer.from(rawMessage),
+      },
     });
+
+    await sesClient.send(sendEmailCommand);
 
     // Enviar notificación al administrador
     const adminEmail = "Jordi.moher@gmail.com";
@@ -153,12 +178,25 @@ export const confirmAttendance = async (req: Request, res: Response) => {
       </div>
     `;
     
-    await transporter.sendMail({
-      from: emailConfig.from,
-      to: adminEmail,
-      subject: `💒 Nueva confirmación: ${guest.nombre_invitado}`,
-      html: notificationHtml
+    const adminBoundary = "----=_Part_Admin_" + Date.now() + "." + Math.random();
+    const adminRawMessage = [
+      `From: ${emailConfig.from}`,
+      `To: ${adminEmail}`,
+      `Subject: =?UTF-8?B?${Buffer.from(`💒 Nueva confirmación: ${guest.nombre_invitado}`).toString("base64")}?=`,
+      `MIME-Version: 1.0`,
+      `Content-Type: text/html; charset=UTF-8`,
+      `Content-Transfer-Encoding: 7bit`,
+      ``,
+      notificationHtml,
+    ].join("\r\n");
+
+    const adminNotificationCommand = new SendRawEmailCommand({
+      RawMessage: {
+        Data: Buffer.from(adminRawMessage),
+      },
     });
+
+    await sesClient.send(adminNotificationCommand);
 
     console.log(`Correo de confirmación enviado a ${email}`);
     console.log(`Notificación enviada a ${adminEmail}`);
